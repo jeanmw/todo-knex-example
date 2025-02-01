@@ -7,6 +7,7 @@ exports.up = function(knex) {
     table.integer('assigned_user_id').unsigned().nullable();
     table.foreign('assigned_user_id').references('id').inTable('users').onDelete('SET NULL');
 
+    // TODO: this should probably be non nullable
     table.integer('created_by_user_id').unsigned().nullable();
     table.foreign('created_by_user_id').references('id').inTable('users').onDelete('SET NULL');
 

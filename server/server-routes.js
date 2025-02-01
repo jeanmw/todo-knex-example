@@ -5,6 +5,8 @@ const _ = require('lodash');
 // Ticket Routes
 
 async function createTicket(req, res) {
+   // TODO: better validatiosn around user, get user from request maybe for the created by user
+   // instead of making the client send that info
     try {
         const ticketData = {
             title: req.body.title,
@@ -21,6 +23,9 @@ async function createTicket(req, res) {
         res.status(500).json({ error: 'Failed to create ticket' });
     }
 }
+
+// TODO: route specifically for claiming a ticket, perhaps?
+
 
 async function getAllTickets(req, res) {
     try {

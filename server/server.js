@@ -9,6 +9,7 @@ app.get('/tickets/:id', routes.getTicket); // Fetch a single ticket by ID
 app.post('/tickets', routes.createTicket); // Create a new ticket
 app.patch('/tickets/:id', routes.updateTicket); // Update a ticket by ID
 app.delete('/tickets/:id', routes.deleteTicket); // Delete a ticket by ID
+// TODO: route specifically for claiming a ticket, perhaps?
 
 // User Routes
 app.post('/users', routes.createUser); // Create a new user
