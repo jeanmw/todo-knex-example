@@ -1,20 +1,24 @@
 const _ = require('lodash');
 const tickets = require('./database/ticket-queries.js');
 
-// TODO: use bearer token authentication for all routes
-// TODO: use role and org permissioning for relevant routes
-// TODO: user and org create routes
+async function createTicket(data) {
+  try {
+      const ticketData = {
+          created_by_user_id: data.createdByUserId,
+          assigned_user_id: data.assignedUserId,
+          status: data.status || 'Ready',
+          title: data.title
+      };
 
-async function createTicket(req, data) {
-  const data = {
-    createdByUserId: data.createdByUserId,
-    assignedUserId: data.assignedUserId,
-    status: data.status,
-    title: data.title,
-  };
-  await tickets.createTicket(data)
-  return data
+      const [newTicket] = await tickets.createTicket(ticketData);
+
+      return newTicket;
+  } catch (error) {
+      console.error('Error creating ticket:', error);
+      throw new Error('Failed to create ticket');
+  }
 }
+
 
 async function getAllTickets(req, res) {
   const allEntries = await tickets.all();
