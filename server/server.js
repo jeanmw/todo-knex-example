@@ -3,19 +3,26 @@ const routes = require('./server-routes.js');
 
 const port = process.env.PORT || 5000;
 
-app.get('/', routes.getAllTickets);
-app.get('/:id', routes.getTicket);
+// Ticket Routes
+app.get('/tickets', routes.getAllTickets); // Fetch all tickets
+app.get('/tickets/:id', routes.getTicket); // Fetch a single ticket by ID
+app.post('/tickets', routes.createTicket); // Create a new ticket
+app.patch('/tickets/:id', routes.updateTicket); // Update a ticket by ID
+app.delete('/tickets/:id', routes.deleteTicket); // Delete a ticket by ID
 
-app.post('/', routes.postTicket);
-app.patch('/:id', routes.patchTicket);
+// User Routes
+app.post('/users', routes.createUser); // Create a new user
 
-app.delete('/:id', routes.deleteTicket);
+// Organization Routes
+app.post('/organizations', routes.createOrganization); // Create a new organization
+app.post('/organizations/:orgId/users', routes.addUserToOrganization); // Add user to an organization
 
-app.post('/users', routes.createUser);
+// Catch-All Route for Undefined Endpoints
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
 
-app.post('/organizations', routes.createOrganization);
-app.post('/organizations/:orgId/users', routes.addUserToOrganization); 
-
+// Start Server
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => console.log(`Listening on port ${port}`));
 }

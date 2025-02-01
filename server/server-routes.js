@@ -1,147 +1,179 @@
-const _ = require('lodash');
+const knex = require('./database/connection');
 const tickets = require('./database/ticket-queries.js');
+const _ = require('lodash');
 
-async function createTicket(data) {
-  try {
-      const ticketData = {
-          created_by_user_id: data.createdByUserId,
-          assigned_user_id: data.assignedUserId,
-          status: data.status || 'Ready',
-          title: data.title
-      };
+// Ticket Routes
 
-      const [newTicket] = await tickets.createTicket(ticketData);
+async function createTicket(req, res) {
+    try {
+        const ticketData = {
+            title: req.body.title,
+            created_by_user_id: req.body.createdByUserId,
+            assigned_user_id: req.body.assignedUserId,
+            status: req.body.status || 'Ready'
+        };
 
-      return newTicket;
-  } catch (error) {
-      console.error('Error creating ticket:', error);
-      throw new Error('Failed to create ticket');
-  }
-}
+        const newTicket = await tickets.create(ticketData);
 
-
-async function getAllTickets(req, res) {
-  const allEntries = await tickets.all();
-  return res.send(allEntries.map( _.curry(createTicket)(req) ));
-}
-
-async function getTicket(req, res) {
-  const Ticket = await tickets.get(req.params.id);
-  return res.send(Ticket);
-}
-
-async function postTicket(req, res) {
-  const created = await tickets.create(req.body.title, req.body.order);
-  return res.send(createTicket(req, created));
-}
-
-async function patchTicket(req, res) {
-  const patched = await tickets.update(req.params.id, req.body);
-  return res.send(createTicket(req, patched));
-}
-
-
-async function deleteTicket(req, res) {
-  const deleted = await tickets.delete(req.params.id);
-  return res.send(createTicket(req, deleted));
-}
-
-function addErrorReporting(func, message) {
-    return async function(req, res) {
-        try {
-            return await func(req, res);
-        } catch(err) {
-            console.log(`${message} caused by: ${err}`);
-
-            // Not always 500, but for simplicity's sake.
-            res.status(500).send(`Opps! ${message}.`);
-        } 
+        res.status(201).json(newTicket);
+    } catch (error) {
+        console.error('Error creating ticket:', error);
+        res.status(500).json({ error: 'Failed to create ticket' });
     }
 }
 
-// Create membership routes
+async function getAllTickets(req, res) {
+    try {
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const offset = parseInt(req.query.offset, 10) || 0;
+
+        const allTickets = await tickets.getAllTickets({ limit, offset });
+
+        res.status(200).json(allTickets);
+    } catch (error) {
+        console.error('Error fetching tickets:', error);
+        res.status(500).json({ error: 'Failed to fetch tickets' });
+    }
+}
+
+async function getTicket(req, res) {
+    try {
+        const ticket = await tickets.get(req.params.id);
+
+        if (!ticket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+
+        res.status(200).json(ticket);
+    } catch (error) {
+        console.error('Error fetching ticket:', error);
+        res.status(500).json({ error: 'Failed to fetch ticket' });
+    }
+}
+
+async function updateTicket(req, res) {
+    try {
+        const updatedTicket = await tickets.update(req.params.id, req.body);
+
+        if (!updatedTicket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+
+        res.status(200).json(updatedTicket);
+    } catch (error) {
+        console.error('Error updating ticket:', error);
+        res.status(500).json({ error: 'Failed to update ticket' });
+    }
+}
+
+async function deleteTicket(req, res) {
+    try {
+        const deletedTicket = await tickets.delete(req.params.id);
+
+        if (!deletedTicket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+
+        res.status(200).json(deletedTicket);
+    } catch (error) {
+        console.error('Error deleting ticket:', error);
+        res.status(500).json({ error: 'Failed to delete ticket' });
+    }
+}
+
+// Membership Routes
 
 async function addUserToOrganization(req, res) {
-  try {
-      const { userId } = req.body;
-      const { orgId } = req.params;
+    try {
+        const { userId } = req.body;
+        const { orgId } = req.params;
 
-      if (!userId) {
-          return res.status(400).json({ error: 'User ID is required' });
-      }
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
 
-      // Check if user exists
-      const user = await knex('users').where({ id: userId }).first();
-      if (!user) {
-          return res.status(404).json({ error: 'User not found' });
-      }
+        const userExists = await knex('users').where({ id: userId }).first();
+        if (!userExists) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
-      // Check if organization exists
-      const org = await knex('organizations').where({ id: orgId }).first();
-      if (!org) {
-          return res.status(404).json({ error: 'Organization not found' });
-      }
+        const orgExists = await knex('organizations').where({ id: orgId }).first();
+        if (!orgExists) {
+            return res.status(404).json({ error: 'Organization not found' });
+        }
 
-      // Insert into memberships table
-      await knex('memberships').insert({ user_id: userId, organization_id: orgId });
+        await knex('memberships').insert({ user_id: userId, organization_id: orgId });
 
-      res.status(201).json({ message: 'User added to organization' });
-  } catch (error) {
-      console.error('Error adding user to organization:', error);
-      res.status(500).json({ error: 'Failed to add user to organization' });
-  }
+        res.status(201).json({ message: 'User added to organization' });
+    } catch (error) {
+        console.error('Error adding user to organization:', error);
+        res.status(500).json({ error: 'Failed to add user to organization' });
+    }
 }
 
-// Create user routes
+// User Routes
 
 async function createUser(req, res) {
-  try {
-      const { name, email, role = 'Regular' } = req.body;
+    try {
+        const { name, email, role = 'Regular' } = req.body;
 
-      if (!name || !email) {
-          return res.status(400).json({ error: 'Name and email are required' });
-      }
+        if (!name || !email) {
+            return res.status(400).json({ error: 'Name and email are required' });
+        }
 
-      const [userId] = await knex('users').insert({ name, email, role }).returning('id');
+        const [userId] = await knex('users').insert({ name, email, role }).returning('id');
 
-      res.status(201).json({ id: userId, name, email, role });
-  } catch (error) {
-      console.error('Error creating user:', error);
-      res.status(500).json({ error: 'Failed to create user' });
-  }
+        res.status(201).json({ id: userId, name, email, role });
+    } catch (error) {
+        console.error('Error creating user:', error);
+        res.status(500).json({ error: 'Failed to create user' });
+    }
 }
+
+// Organization Routes
 
 async function createOrganization(req, res) {
-  try {
-      const { name } = req.body;
+    try {
+        const { name } = req.body;
 
-      if (!name) {
-          return res.status(400).json({ error: 'Organization name is required' });
-      }
+        if (!name) {
+            return res.status(400).json({ error: 'Organization name is required' });
+        }
 
-      const [organizationId] = await knex('organizations').insert({ name }).returning('id');
+        const [organizationId] = await knex('organizations').insert({ name }).returning('id');
 
-      res.status(201).json({ id: organizationId, name });
-  } catch (error) {
-      console.error('Error creating organization:', error);
-      res.status(500).json({ error: 'Failed to create organization' });
-  }
+        res.status(201).json({ id: organizationId, name });
+    } catch (error) {
+        console.error('Error creating organization:', error);
+        res.status(500).json({ error: 'Failed to create organization' });
+    }
 }
 
+
+function addErrorReporting(func, message) {
+    return async function (req, res) {
+        try {
+            await func(req, res);
+        } catch (err) {
+            console.error(`${message} caused by:`, err);
+            res.status(500).json({ error: `Opps! ${message}` });
+        }
+    };
+}
 
 
 const toExport = {
-    getAllTickets: { method: getAllTickets, errorMessage: "Could not fetch all tickets" },
-    getTicket: { method: getTicket, errorMessage: "Could not fetch Ticket" },
-    postTicket: { method: postTicket, errorMessage: "Could not post Ticket" },
-    patchTicket: { method: patchTicket, errorMessage: "Could not patch Ticket" },
-    deleteTicket: { method: deleteTicket, errorMessage: "Could not delete Ticket" },
-    addUserToOrganization: { method: addUserToOrganization, errorMessage: "Could not add user to organization" },
-    createUser: { method: createUser, errorMessage: "Could not create user" },
-    createOrganization: { method: createOrganization, errorMessage: "Could not create organization" },
-}
+    createTicket: { method: createTicket, errorMessage: 'Could not create ticket' },
+    getAllTickets: { method: getAllTickets, errorMessage: 'Could not fetch all tickets' },
+    getTicket: { method: getTicket, errorMessage: 'Could not fetch ticket' },
+    updateTicket: { method: updateTicket, errorMessage: 'Could not update ticket' },
+    deleteTicket: { method: deleteTicket, errorMessage: 'Could not delete ticket' },
+    addUserToOrganization: { method: addUserToOrganization, errorMessage: 'Could not add user to organization' },
+    createUser: { method: createUser, errorMessage: 'Could not create user' },
+    createOrganization: { method: createOrganization, errorMessage: 'Could not create organization' },
+};
 
-for (let route in toExport) {
+for (const route in toExport) {
     toExport[route] = addErrorReporting(toExport[route].method, toExport[route].errorMessage);
 }
 
