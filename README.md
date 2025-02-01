@@ -1,69 +1,25 @@
-> [!WARNING]
-> I implemented this for an interview once ages ago, but now it's unmaintained.
+# Subscript sample work
 
-# todo-backend-express-knex
+Based off of [this repo](https://github.com/tonycheang/todo-backend-express-knex)
 
-This is an implementation of [Todo-Backend](http://todobackend.com/) using Node and Express for the server, Knex for database migrations and query building, and some ES6+ features such as async/await. By default, this project configures Knex to save to PostgreSQL.
+Whiteboard: https://whimsical.com/ticketing-app-CTnCtRSYW8RAMUxfu7xLbm
 
-A [production instance](https://todo-backend-express-knex.herokuapp.com/) is running on Heroku.
+# Notes
 
-Bonus features include a simple frontend boostrapped with create-react-app and the todo-backend specification tests transcribed for Jest--a quick full-stack starter pack.
 
-## Installation
+What I did well:
 
-1. Clone this repository.
+* Initial thinking through DB setup / relationships and tradeoffs
+* Thinking about business needs and setting up relationships accordingly
+* Parsing through Knex docs
+* Explaining thought process
+* Getting basic working MVP with some super basic security
 
-    `git clone git@github.com:tonycheang/todo-backend-express-knex.git`
+What I could have done better
+* Maybe focusing on a smaller scope and working on more server routing / security code and not focusing the majority of the time on the DB setup
+* Was unsure if I was allowed to use Copilot / LLMs - I used chatgpt a couple times in the video, but wasn't sure how closely I should be mimicing my real setup. 
+* I could have moved a lot faster if I wasn't talking so much about my planning. System design stuff took a lot of time. Also could have moved faster if I were using LLMs per my normal setup(copilot) but wasn't sure if this was allowed
+* Edge case handling, better validations (see some TODOs in code)
 
-2. Install dependencies.
+Commits are in the repo - unfortunately I was so focused on chatting through my coding that I did not push right away, but the commit atomicity should be reflective of normal practices. 
 
-    `yarn install`
-
-3. Create a postgres database for the project.
-
-    ```Bash
-    % psql postgres -U your_username_here
-    postgres=> CREATE DATABASE name_of_db;
-    postgres=> GRANT ALL PRIVILEGES ON DATABASE name_of_db TO your_username_here;
-    postgres=> \q
-    ```
-
-    > You could change the default database, but Knex's .returning() method will only work for PostgreSQL, MSSQL, and Oracle databases. Modifications will be needed for other databases to meet the todo-backend spec.
-
-4. Add Postgres credentials into server/.env to allow Knex to connect to the database.
-5. Install Knex globally.
-
-    `npm install knex -g`
-
-6. Set up the database using Knex migrations.
-
-    `cd server && knex migrate:latest`
-
-7. Start the server on [http://localhost:5000](http://localhost:5000).
-
-    `yarn server`
-
-8. Test it against the spec at [Todo-Backend Specs](http://todobackend.com/specs/index.html?http://localhost:5000/)
-
-## Bonus Features
-
-- Run tests locally using either.
-
-    `yarn test`
-
-    `yarn test:watch`
-
-    >The second command requires watchman  
-    >`brew install watchman`
-
-- Install create-react-app frontend starting at root directory:
-
-    `cd client && yarn install`
-
-- Run backend and frontend simultaneously from root directory.
-
-    `yarn dev`
-
-    > Note: The proxied connection will only work locally.
-    > You'll need the server to serve the frontend build if
-    > you want to host the entire project somewhere.
