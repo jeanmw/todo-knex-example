@@ -1,47 +1,45 @@
 const _ = require('lodash');
-const todos = require('./database/todo-queries.js');
+const tickets = require('./database/ticket-queries.js');
 
-function createToDo(req, data) {
-  const protocol = req.protocol, 
-    host = req.get('host'), 
-    id = data.id;
+// TODO: use bearer token authentication for all routes
+// TODO: use role and org permissioning for relevant routes
+// TODO: user and org create routes
 
-  return {
+async function createTicket(req, data) {
+  const data = {
+    createdByUserId: data.createdByUserId,
+    assignedUserId: data.assignedUserId,
+    status: data.status,
     title: data.title,
-    order: data.order,
-    completed: data.completed || false,
-    url: `${protocol}://${host}/${id}`
   };
+  await tickets.createTicket(data)
+  return data
 }
 
-async function getAllTodos(req, res) {
-  const allEntries = await todos.all();
-  return res.send(allEntries.map( _.curry(createToDo)(req) ));
+async function getAllTickets(req, res) {
+  const allEntries = await tickets.all();
+  return res.send(allEntries.map( _.curry(createTicket)(req) ));
 }
 
-async function getTodo(req, res) {
-  const todo = await todos.get(req.params.id);
-  return res.send(todo);
+async function getTicket(req, res) {
+  const Ticket = await tickets.get(req.params.id);
+  return res.send(Ticket);
 }
 
-async function postTodo(req, res) {
-  const created = await todos.create(req.body.title, req.body.order);
-  return res.send(createToDo(req, created));
+async function postTicket(req, res) {
+  const created = await tickets.create(req.body.title, req.body.order);
+  return res.send(createTicket(req, created));
 }
 
-async function patchTodo(req, res) {
-  const patched = await todos.update(req.params.id, req.body);
-  return res.send(createToDo(req, patched));
+async function patchTicket(req, res) {
+  const patched = await tickets.update(req.params.id, req.body);
+  return res.send(createTicket(req, patched));
 }
 
-async function deleteAllTodos(req, res) {
-  const deletedEntries = await todos.clear();
-  return res.send(deletedEntries.map( _.curry(createToDo)(req) ));
-}
 
-async function deleteTodo(req, res) {
-  const deleted = await todos.delete(req.params.id);
-  return res.send(createToDo(req, deleted));
+async function deleteTicket(req, res) {
+  const deleted = await tickets.delete(req.params.id);
+  return res.send(createTicket(req, deleted));
 }
 
 function addErrorReporting(func, message) {
@@ -57,13 +55,15 @@ function addErrorReporting(func, message) {
     }
 }
 
+// Create membership routes
+// Create user routes
+
 const toExport = {
-    getAllTodos: { method: getAllTodos, errorMessage: "Could not fetch all todos" },
-    getTodo: { method: getTodo, errorMessage: "Could not fetch todo" },
-    postTodo: { method: postTodo, errorMessage: "Could not post todo" },
-    patchTodo: { method: patchTodo, errorMessage: "Could not patch todo" },
-    deleteAllTodos: { method: deleteAllTodos, errorMessage: "Could not delete all todos" },
-    deleteTodo: { method: deleteTodo, errorMessage: "Could not delete todo" }
+    getAllTickets: { method: getAllTickets, errorMessage: "Could not fetch all tickets" },
+    getTicket: { method: getTicket, errorMessage: "Could not fetch Ticket" },
+    postTicket: { method: postTicket, errorMessage: "Could not post Ticket" },
+    patchTicket: { method: patchTicket, errorMessage: "Could not patch Ticket" },
+    deleteTicket: { method: deleteTicket, errorMessage: "Could not delete Ticket" }
 }
 
 for (let route in toExport) {
