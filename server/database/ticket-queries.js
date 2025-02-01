@@ -1,6 +1,8 @@
 const knex = require("./connection.js");
 
 // TOOD: permissioning queries for org and role level access
+// We should have a function that checks if a user has permission to access a ticket and /or an org
+// TODO: QS optimizations
 
 // async function hasTicketPermission(ticketId, userId) {
 //     try {

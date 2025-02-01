@@ -11,6 +11,11 @@ app.patch('/:id', routes.patchTicket);
 
 app.delete('/:id', routes.deleteTicket);
 
+app.post('/users', routes.createUser);
+
+app.post('/organizations', routes.createOrganization);
+app.post('/organizations/:orgId/users', routes.addUserToOrganization); 
+
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => console.log(`Listening on port ${port}`));
 }
